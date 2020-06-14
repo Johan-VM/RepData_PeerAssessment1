@@ -1,18 +1,45 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: "Johan Vásquez Mazo"
 output: 
   html_document:
     keep_md: true
 ---
 
+First off, global options are set so that every code chunk is echoed.
+
+```{r setoptions, echo = TRUE}
+library(knitr)
+opts_chunk$set(echo = TRUE)
+```
 
 ## Loading and preprocessing the data
 
+The *activity.zip* file only contains a file: *activity.csv*, so the data are easily read by using the function `read.csv` and unzipping the file from within the function. The activity monitoring data are stored into a data frame called `data`.
 
+```{r loaddata}
+data <- read.csv(file = unz("activity.zip", "activity.csv"), header = TRUE)
+str(data)
+```
+
+By calling `str(data)`, it is seen that there are three variables: `steps`, `date` and `interval`; and 17568 observations. However, the `date` variable is of class `character`, so it needs to be set as a date variable by using the `as.Date` function, with argument `format` set equal to `"%Y-%m-%d"`.
+
+```{r dateclass}
+data$date <- as.Date(data$date, format = "%Y-%m-%d")
+str(data)
+```
+
+The data are now tidy and ready to be processed.
 
 ## What is mean total number of steps taken per day?
 
+To calculate the total number of steps taken per day, the function `tapply` comes in handy by using the `date` variable as a factor. A list called `totalSteps` is created when calling `tapply` with arguments `X = data$Steps`, `INDEX = data$date`, `FUN = sum` and `na.rm = TRUE`. Since `tapply` coerces the `INDEX` elements into factors, it is not necessary to call `as.factor(data$date)` when setting the `INDEX` argument. Afterwards, this list `totalSteps` is converted into a data frame by using the `as.data.frame` function.
 
+```{r totalsteps}
+totalSteps <- tapply(data$steps, data$date, sum, na.rm = TRUE)
+totalSteps <- as.data.frame(totalSteps)
+summary(totalSteps)
+```
 
 ## What is the average daily activity pattern?
 
