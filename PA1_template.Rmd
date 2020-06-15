@@ -41,12 +41,95 @@ totalSteps <- as.data.frame(totalSteps)
 summary(totalSteps)
 ```
 
+The following code creates a histogram of the total number of steps taken per day, indicating both the mean and the median of these data.
+
+```{r histogram}
+hist(totalSteps[[1]], breaks = 10, main = "Total number of steps taken per day", xlab = "Total steps", col = "whitesmoke")
+abline(v = mean(totalSteps[[1]], na.rm = TRUE), lwd = 2, col = "seagreen")
+abline(v = median(totalSteps[[1]], na.rm = TRUE), lwd = 3, col = "darkblue")
+legend("topright", legend = c("Mean", "Median"), col = c("seagreen", "darkblue"), lty = c(1, 1), lwd = c(2, 3))
+```
+
+From either the summary or the graph, it can be seen that the **mean** number of total steps taken per day is **9354**, whereas the **median** number of total steps taken per day is **10395**.
+
 ## What is the average daily activity pattern?
 
+To calculate the average number of steps taken for each 5-minute interval, the function `tapply` proves useful again. This time a list called `averageSteps` is created when calling `tapply` with arguments `X = data$Steps`, `INDEX = data$interval`, `FUN = mean` and `na.rm = TRUE`. Again, it is not necessary to call `as.factor(data$interval)` when setting the `INDEX` argument. This list `averageSteps` is too converted into a data frame by using the `as.data.frame` function.
 
+```{r averagepattern}
+averageSteps <- tapply(data$steps, data$interval, mean, na.rm = TRUE)
+averageSteps <- as.data.frame(averageSteps)
+summary(averageSteps)
+```
+
+The following code creates a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
+
+```{r timeseriesplot}
+plot(unique(data$interval), averageSteps[[1]], type = "l", main = "Average daily activity pattern",
+     xlab = "5-minute interval", ylab = "Average number of steps taken", col = "royalblue", lwd = 1.5)
+```
+
+To find which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps, the function `which.max` is used on the `averageSteps` data frame created previously. This retrieves the index of the data frame containing the maximum of `averageSteps`, which is stored on an integer called `maxsteps`. Now, to find which 5-minute interval this corresponds to, the entry `maxsteps` (**104**) from the vector of interval identifiers is returned by calling `unique(data$interval)[maxsteps]`. The answer is **835**, that is, from **08:35:01** to *08:40:00*. Seems reasonable, since this is a perfect time for going jogging.
+
+```{r maximum}
+maxsteps <- which.max(averageSteps[[1]])
+unique(data$interval)[maxsteps]
+```
 
 ## Imputing missing values
 
+```{r NAs}
+summary(data)
+sum(is.na(data$steps))
+```
 
+Only the `steps` variable contains `NA` values, which can be seen by calling `summary(data)`. Another way of calculating the number of `NA` values in `data$steps` is by calling `sum(is.na(data$steps))`. This is done in the following code, which shows that the total number of `NA` values is **2304**.
+
+```{r dayone}
+data[data$date == "2012-10-01", ]
+```
+
+To impute missing values, a reasonable strategy seems like calculating the mean across every 5-minute interval, since a quick examination of the data shows that there are no records for the steps taken on `2012-10-01`, which poses a problem if trying to impute `NA` values by calculating the mean for each day. Another strategy could be calculating the mean by day of the week. Considering that the strategy needs not be sophisticated, and other strategies like **KNN**, **FKM**, **SVD**, **bPCA** or **MICE** are more computationally expensive and this is not an R code to be run multiple times, i.e. a markdown document, the final missing values imputing method will be calculating the mean across each 5-minute interval and assigning it to the corresponding `NAs`.
+
+The following code imputes the `NA` values by using the `data.table` package and, especially, the `nafill` function, which replaces missing values using constant values, in this case the mean calculated across each 5-minute interval. The line `copy(data)` is necessary to avoid rewriting of `data`, which is needed to compare between both data sets, i.e. `NAs` imputed or not.
+
+```{r NAimputing}
+library(data.table)
+dat <- copy(data)
+setDT(dat)
+cols <- c("steps")
+dat[, (cols) := lapply(.SD, function(x) nafill(x, type = "const", fill = mean(x, na.rm = TRUE)))
+    , by = interval, .SDcols = cols][]
+```
+
+Similarly, the following code calculates the total number of steps taken per day, now to the data set with `NAs` imputed, i.e. `dat`.
+
+```{r totalstepsimputed}
+totalStepsImputed <- tapply(dat$steps, dat$date, sum, na.rm = TRUE)
+totalStepsImputed <- as.data.frame(totalStepsImputed)
+summary(totalStepsImputed)
+```
+
+The following code creates a histogram of the total number of steps taken per day, for both data sets: removing `NAs` and imputing `NAs`. 
+
+```{r histogramComparison}
+par(mfrow = c(2, 1), mar = c(4, 4, 2, 1),  oma = c(1, 1, 3, 1))
+
+hist(totalSteps[[1]], breaks = 10, main = "NA values ignored", xlab = "Total steps", col = "whitesmoke")
+abline(v = mean(totalSteps[[1]], na.rm = TRUE), lwd = 2, col = "seagreen")
+abline(v = median(totalSteps[[1]], na.rm = TRUE), lwd = 3, col = "darkblue")
+legend("topright", legend = c("Mean", "Median"), col = c("seagreen", "darkblue"), lty = c(1, 1), lwd = c(2, 3))
+
+hist(totalStepsImputed[[1]], breaks = 10, main = "NA values imputed", xlab = "Total steps", col = "whitesmoke")
+abline(v = mean(totalStepsImputed[[1]], na.rm = TRUE), lwd = 2, col = "seagreen")
+abline(v = median(totalStepsImputed[[1]], na.rm = TRUE), lwd = 3, col = "darkblue")
+legend("topright", legend = c("Mean", "Median"), col = c("seagreen", "darkblue"), lty = c(1, 1), lwd = c(2, 3))
+
+mtext("Total number of steps taken per day", line = 0, font = 2, side = 3, cex = 2, outer = TRUE)
+```
+
+From either the summary or the graph of the data set with `NAs` imputed, it can be seen that the **mean** number of total steps taken per day is **10750**, whereas the **median** number of total steps taken per day is **10641**. A further analysis shows that the minimum, first quantile, median and mean from the total number of steps taken per day with `NAs` imputed are all higher than those from the total number of steps taken per day with `NAs` not imputed. This makes sense since imputation will make all `NA` values to take positive values, and the daily total of steps will go higher because of that.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
