@@ -69,7 +69,7 @@ plot(unique(data$interval), averageSteps[[1]], type = "l", main = "Average daily
      xlab = "5-minute interval", ylab = "Average number of steps taken", col = "royalblue", lwd = 1.5)
 ```
 
-To find which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps, the function `which.max` is used on the `averageSteps` data frame created previously. This retrieves the index of the data frame containing the maximum of `averageSteps`, which is stored on an integer called `maxsteps`. Now, to find which 5-minute interval this corresponds to, the entry `maxsteps` (**104**) from the vector of interval identifiers is returned by calling `unique(data$interval)[maxsteps]`. The answer is **835**, that is, from **08:35:01** to *08:40:00*. Seems reasonable, since this is a perfect time for going jogging.
+To find which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps, the function `which.max` is used on the `averageSteps` data frame created previously. This retrieves the index of the data frame containing the maximum of `averageSteps`, which is stored on an integer called `maxsteps`. Now, to find which 5-minute interval this corresponds to, the entry `maxsteps` (**104**) from the vector of interval identifiers is returned by calling `unique(data$interval)[maxsteps]`. The answer is **835**, that is, from **08:35:01** to **08:40:00**. Seems reasonable, since this is a perfect time for going jogging.
 
 ```{r maximum}
 maxsteps <- which.max(averageSteps[[1]])
@@ -83,9 +83,9 @@ summary(data)
 sum(is.na(data$steps))
 ```
 
-Only the `steps` variable contains `NA` values, which can be seen by calling `summary(data)`. Another way of calculating the number of `NA` values in `data$steps` is by calling `sum(is.na(data$steps))`. This is done in the following code, which shows that the total number of `NA` values is **2304**.
+Only the `steps` variable contains `NA` values, which can be seen by calling `summary(data)`. Another way of calculating the number of `NA` values in `data$steps` is by calling `sum(is.na(data$steps))`. This is done in the previous code, which shows that the total number of `NA` values is **2304**.
 
-```{r dayone}
+```{r dayone, results = "hide"}
 data[data$date == "2012-10-01", ]
 ```
 
@@ -132,4 +132,49 @@ From either the summary or the graph of the data set with `NAs` imputed, it can 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
+First, a new factor variable must be added to the data set according to whether a date is a weekday or weekend day. To avoid language problems, the function `weekdays` is not used because it returns the name of the day in the current set language. Since I am a Spanish speaker and my R session locale is set at Spanish, `weekdays` will return `"lunes"`, `"martes"`, `"miércoles"`, `"jueves"`, `"viernes"`, `"sábado"`, `"domingo"`, or a third-letter abbreviation. To elude working with this issue, the function `wday` is used on the `date` variable as `POSIXlt`. This will return a number from 0 to 6, which indicates the day of the week, starting on Sunday and ending on Saturday (i.e. Sunday = 0, Monday = 1...).
 
+This variable, called `day`, is then changed into a factor, whose levels are `0`, `1`, `2`, `3`, `4`, `5` and `6`. These levels are reassigned into `"weekday"` or "`weekend`" according to the number: `0`, `5` and `6` are Sunday, Friday and Saturday, respectively. It must be remembered that the data set with these changes is the one with imputed missing data.
+
+```{r factor}
+dat$day <- as.POSIXlt(dat$date)$wday
+dat$day <- as.factor(dat$day)
+levels(dat$day) <- c("weekend", "weekday", "weekday", "weekday", "weekday", "weekend", "weekend")
+```
+
+The data are split according to the new factor variable.
+
+```{r splitting}
+splitDat <- split(dat, dat$day)
+```
+
+The following code chunks will calculate the average number of steps taken for each 5-minute interval, averaged across all weekday days or weekend days.
+
+```{r averagepatternweekdays}
+weekdays <- splitDat$weekday
+averageStepsWeekdays <- tapply(weekdays$steps, weekdays$interval, mean, na.rm = TRUE)
+averageStepsWeekdays <- as.data.frame(averageStepsWeekdays)
+summary(averageStepsWeekdays)
+```
+```{r averagepatternweekends}
+weekends <- splitDat$weekend
+averageStepsWeekends <- tapply(weekends$steps, weekends$interval, mean, na.rm = TRUE)
+averageStepsWeekends <- as.data.frame(averageStepsWeekends)
+summary(averageStepsWeekends)
+```
+
+Finally, the following code will make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+```{r histograms}
+par(mfrow = c(2, 1), mar = c(4, 4, 2, 1),  oma = c(1, 1, 3, 1))
+
+plot(unique(data$interval), averageStepsWeekdays[[1]], type = "l", main = "Weekdays activity pattern",
+     xlab = "5-minute interval", ylab = "Average steps taken", col = "red", lwd = 1.5)
+
+plot(unique(data$interval), averageStepsWeekends[[1]], type = "l", main = "Weekends activity pattern",
+     xlab = "5-minute interval", ylab = "Average steps taken", col = "orange", lwd = 1.5)
+
+mtext("Average number of steps taken each 5-minutes", line = 0, font = 2, side = 3, cex = 1.8, outer = TRUE)
+```
+
+It can be seen that there's not a notorious difference between the activity patterns of weekdays and weekends.
