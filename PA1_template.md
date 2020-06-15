@@ -234,13 +234,13 @@ From either the summary or the graph of the data set with `NAs` imputed, it can 
 
 First, a new factor variable must be added to the data set according to whether a date is a weekday or weekend day. To avoid language problems, the function `weekdays` is not used because it returns the name of the day in the current set language. Since I am a Spanish speaker and my R session locale is set at Spanish, `weekdays` will return `"lunes"`, `"martes"`, `"miércoles"`, `"jueves"`, `"viernes"`, `"sábado"`, `"domingo"`, or a third-letter abbreviation. To elude working with this issue, the function `wday` is used on the `date` variable as `POSIXlt`. This will return a number from 0 to 6, which indicates the day of the week, starting on Sunday and ending on Saturday (i.e. Sunday = 0, Monday = 1...).
 
-This variable, called `day`, is then changed into a factor, whose levels are `0`, `1`, `2`, `3`, `4`, `5` and `6`. These levels are reassigned into `"weekday"` or "`weekend`" according to the number: `0`, `5` and `6` are Sunday, Friday and Saturday, respectively. It must be remembered that the data set with these changes is the one with imputed missing data.
+This variable, called `day`, is then changed into a factor, whose levels are `0`, `1`, `2`, `3`, `4`, `5` and `6`. These levels are reassigned into `"weekday"` or "`weekend`" according to the number: `0` and `6` are Sunday and Saturday, respectively. It must be remembered that the data set with these changes is the one with imputed missing data.
 
 
 ```r
 dat$day <- as.POSIXlt(dat$date)$wday
 dat$day <- as.factor(dat$day)
-levels(dat$day) <- c("weekend", "weekday", "weekday", "weekday", "weekday", "weekend", "weekend")
+levels(dat$day) <- c("weekend", "weekday", "weekday", "weekday", "weekday", "weekday", "weekend")
 ```
 
 The data are split according to the new factor variable.
@@ -262,12 +262,12 @@ summary(averageStepsWeekdays)
 
 ```
 ##  averageStepsWeekdays
-##  Min.   :  0.00      
-##  1st Qu.:  2.41      
-##  Median : 19.96      
-##  Mean   : 34.04      
-##  3rd Qu.: 53.69      
-##  Max.   :222.22
+##  Min.   :  0.000     
+##  1st Qu.:  2.156     
+##  Median : 25.700     
+##  Mean   : 35.553     
+##  3rd Qu.: 50.806     
+##  Max.   :230.356
 ```
 
 ```r
@@ -279,12 +279,12 @@ summary(averageStepsWeekends)
 
 ```
 ##  averageStepsWeekends
-##  Min.   :  0.00      
-##  1st Qu.:  1.76      
-##  Median : 33.72      
-##  Mean   : 42.05      
-##  3rd Qu.: 70.58      
-##  Max.   :209.88
+##  Min.   :  0.000     
+##  1st Qu.:  1.188     
+##  Median : 32.312     
+##  Mean   : 42.312     
+##  3rd Qu.: 74.594     
+##  Max.   :166.625
 ```
 
 Finally, the following code will make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
@@ -304,4 +304,4 @@ mtext("Average number of steps taken each 5-minutes", line = 0, font = 2, side =
 
 ![](PA1_template_files/figure-html/histograms-1.png)<!-- -->
 
-It can be seen that there's not a notorious difference between the activity patterns of weekdays and weekends.
+It can be seen that the average number of steps taken on weekends is higher than that on weekdays.

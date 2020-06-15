@@ -134,12 +134,12 @@ From either the summary or the graph of the data set with `NAs` imputed, it can 
 
 First, a new factor variable must be added to the data set according to whether a date is a weekday or weekend day. To avoid language problems, the function `weekdays` is not used because it returns the name of the day in the current set language. Since I am a Spanish speaker and my R session locale is set at Spanish, `weekdays` will return `"lunes"`, `"martes"`, `"miércoles"`, `"jueves"`, `"viernes"`, `"sábado"`, `"domingo"`, or a third-letter abbreviation. To elude working with this issue, the function `wday` is used on the `date` variable as `POSIXlt`. This will return a number from 0 to 6, which indicates the day of the week, starting on Sunday and ending on Saturday (i.e. Sunday = 0, Monday = 1...).
 
-This variable, called `day`, is then changed into a factor, whose levels are `0`, `1`, `2`, `3`, `4`, `5` and `6`. These levels are reassigned into `"weekday"` or "`weekend`" according to the number: `0`, `5` and `6` are Sunday, Friday and Saturday, respectively. It must be remembered that the data set with these changes is the one with imputed missing data.
+This variable, called `day`, is then changed into a factor, whose levels are `0`, `1`, `2`, `3`, `4`, `5` and `6`. These levels are reassigned into `"weekday"` or "`weekend`" according to the number: `0` and `6` are Sunday and Saturday, respectively. It must be remembered that the data set with these changes is the one with imputed missing data.
 
 ```{r factor}
 dat$day <- as.POSIXlt(dat$date)$wday
 dat$day <- as.factor(dat$day)
-levels(dat$day) <- c("weekend", "weekday", "weekday", "weekday", "weekday", "weekend", "weekend")
+levels(dat$day) <- c("weekend", "weekday", "weekday", "weekday", "weekday", "weekday", "weekend")
 ```
 
 The data are split according to the new factor variable.
@@ -177,4 +177,4 @@ plot(unique(data$interval), averageStepsWeekends[[1]], type = "l", main = "Weeke
 mtext("Average number of steps taken each 5-minutes", line = 0, font = 2, side = 3, cex = 1.8, outer = TRUE)
 ```
 
-It can be seen that there's not a notorious difference between the activity patterns of weekdays and weekends.
+It can be seen that the average number of steps taken on weekends is higher than that on weekdays.
